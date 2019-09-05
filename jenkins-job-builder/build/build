@@ -36,9 +36,9 @@ for dir in `find . -maxdepth 1 -path ./.git -prune -o -type d -print`; do
         echo "found definitions directory: $definitions_dir"
 
             # Test the definitions first
-            $VENV/jenkins-jobs --ignore-cache --log_level DEBUG --conf $JJB_CONFIG test $definitions_dir -o $TEMPDIR
+            $VENV/jenkins-jobs --ignore-cache --conf $JJB_CONFIG test $definitions_dir -o $TEMPDIR
 
             # Update Jenkins with the output if they passed the test phase
-            $VENV/jenkins-jobs --ignore-cache --log_level DEBUG --conf $JJB_CONFIG update $definitions_dir
+            $VENV/jenkins-jobs --ignore-cache  --conf $JJB_CONFIG update $definitions_dir
     fi
 done
