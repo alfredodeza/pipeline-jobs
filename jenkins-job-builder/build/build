@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+#
+# This script uses Jenkins Job Builder to generate the configuration for its own
+# job so that it automatically configures all other jobs that have their YAML
+# definitions.
+#
+
+set -euxo pipefail
+
+virtualenv --python=python3 $WORKSPACE/venv
+VENV=$WORKSPACE/venv/bin
+$VENV/pip install jenkins-job-builder
+
+# Each jenkins master will write its own config file when the
+# jenkins-job-builder gets run
+JENKINS_FQDN=$(echo $JENKINS_URL | awk -F/ '{print $3}')
+JJB_CONFIG="$HOME/.jenkins_jobs.ini"
+
+# slap the programatically computed JJB config using env vars from Jenkins
+cat > $JJB_CONFIG << EOF
+[jenkins]
+user=$JOB_BUILDER_USER
+password=$JOB_BUILDER_PASS
+url=$JENKINS_URL
+EOF
+
+# Make a temp dir to store job configs created using `jenkins-jobs test`
+TEMPDIR=$(mktemp -d)
+
+# Test every definition if available in the current repository and update the jobs
+# if they do define one (they should always define their definitions)
+for dir in `find . -maxdepth 1 -path ./.git -prune -o -type d -print`; do
+    definitions_dir="$dir/config"
+    if [ -d "$definitions_dir" ]; then
+        echo "found definitions directory: $definitions_dir"
+
+            # Test the definitions first
+            $VENV/jenkins-jobs --log_level DEBUG --conf $JJB_CONFIG test $definitions_dir -o $TEMPDIR
+
+            # Update Jenkins with the output if they passed the test phase
+            $VENV/jenkins-jobs --log_level DEBUG --conf $JJB_CONFIG update $definitions_dir
+    fi
+done

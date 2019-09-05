@@ -1,0 +1,41 @@
+- job:
+    name: jenkins-job-builder
+    project-type: freestyle
+    defaults: global
+    display-name: 'Jenkins Job Builder'
+    concurrent: true
+    quiet-period: 5
+    block-downstream: false
+    block-upstream: false
+    retry-count: 3
+    properties:
+      - github:
+          url: https://github.com/alfredodeza/pipeline-jobs
+
+    triggers:
+      - pollscm:
+          cron: "*/2 * * * *"
+          ignore-post-commit-hooks: True
+
+    wrappers:
+      - inject-passwords:
+          global: true
+          mask-password-params: true
+      - credentials-binding:
+          - username-password-separated:
+              credential-id: jenkins-api-token
+              username: JOB_BUILDER_USER
+              password: JOB_BUILDER_PASS
+
+    scm:
+      - git:
+          url: https://github.com/alfredodeza/pipeline-jobs
+          branches:
+            - master
+          browser: auto
+          timeout: 20
+
+    builders:
+      - shell:
+          !include-raw:
+            - ../../build/build
