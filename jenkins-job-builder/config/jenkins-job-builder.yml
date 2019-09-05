@@ -15,7 +15,6 @@
     triggers:
       - pollscm:
           cron: "*/2 * * * *"
-          ignore-post-commit-hooks: True
 
     wrappers:
       - inject-passwords:
@@ -38,4 +37,4 @@
     builders:
       - shell:
           !include-raw:
-            - ../../build/build
+            - ../build/build
